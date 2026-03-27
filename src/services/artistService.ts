@@ -16,9 +16,7 @@ export interface ArtistMetadata {
 export async function fetchArtistMetadata(
   artistName: string
 ): Promise<ArtistMetadata | null> {
-  alert("ARTIST SERVICE NEW VERSION");
-  console.log("ARTIST SERVICE NEW VERSION", artistName);
-  console.log("fetchArtistMetadata called with:", artistName);
+  console.log("ARTIST SERVICE RUNNING", artistName);
   console.log("API key exists:", !!apiKey);
 
   if (!apiKey) {
@@ -29,25 +27,25 @@ export async function fetchArtistMetadata(
   try {
     const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `Provide detailed biographical information for the artist "${artistName}".
-    Write EVERYTHING in Spanish.
-    Return ONLY valid JSON with these keys:
-    - biography
-    - birthDate
-    - deathDate
-    - birthPlace
-    - deathPlace
-    - instruments
-    - periods
-    - imageKeyword
-    
-    Rules:
-    - biography: around 120-180 words, in Spanish
-    - birthDate and deathDate: format YYYY-MM-DD when known, otherwise empty string
-    - birthPlace and deathPlace: "Ciudad, País"
-    - instruments: array of strings in Spanish
-    - periods: array of strings in Spanish
-    - imageKeyword: short portrait description`;
+    const prompt = `Escribe una biografía del artista "${artistName}" en español.
+
+Devuelve SOLO JSON válido con estas claves:
+- biography
+- birthDate
+- deathDate
+- birthPlace
+- deathPlace
+- instruments
+- periods
+- imageKeyword
+
+Reglas:
+- biography: 120-180 palabras, en español
+- birthDate y deathDate: formato YYYY-MM-DD si se conoce, si no cadena vacía
+- birthPlace y deathPlace: "Ciudad, País" si se conoce, si no cadena vacía
+- instruments: array de strings en español
+- periods: array de strings en español
+- imageKeyword: descripción corta para retrato`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -86,7 +84,6 @@ export async function fetchArtistMetadata(
       }
     });
 
-    console.log("Gemini response object:", response);
     console.log("Gemini response text:", response.text);
 
     if (!response.text) {
@@ -96,7 +93,7 @@ export async function fetchArtistMetadata(
 
     const data = JSON.parse(response.text);
 
-    const result: ArtistMetadata = {
+    return {
       biography: data.biography || "",
       birthDate: data.birthDate || "",
       deathDate: data.deathDate || "",
@@ -108,9 +105,6 @@ export async function fetchArtistMetadata(
         `${artistName} portrait ${data.imageKeyword || "musician"}`
       )}/800/800`
     };
-
-    console.log("Parsed artist metadata:", result);
-    return result;
   } catch (error) {
     console.error("Error fetching artist metadata:", error);
     return null;
