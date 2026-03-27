@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+console.log("Gemini API key:", apiKey);
 
 export interface ArtistMetadata {
   biography: string;
