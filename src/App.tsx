@@ -1754,7 +1754,9 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Error';
+                      const img = e.currentTarget;
+                      img.onerror = null;
+                      (e.target as HTMLImageElement).src = 'https://picsum.photos/150/150?text=Error';
                     }}
                   />
                 </div>
