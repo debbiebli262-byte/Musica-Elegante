@@ -1368,15 +1368,19 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
   }, []);
 
   const handleFetchMetadata = async () => {
-    console.log("AUTOCOMPLETE CLICKED", name);
-    
+  console.log("AUTOCOMPLETE CLICKED", name);
+
   if (!name) return;
   setFetchingMetadata(true);
 
   try {
+    console.log("Checking Firestore...");
     const existingArtist = await getArtistByName(name);
+    console.log("existingArtist:", existingArtist);
 
     if (existingArtist) {
+      console.log("Loading from Firestore");
+
       setBiography(existingArtist.biography || '');
       setBirthDate(existingArtist.birthDate || '');
       setDeathDate(existingArtist.deathDate || '');
@@ -1386,7 +1390,9 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
       setPeriods(existingArtist.periods || []);
       setImageUrl(existingArtist.imageUrl || '');
     } else {
+      console.log("Fetching from Gemini...");
       const metadata = await fetchArtistMetadata(name);
+      console.log("metadata from Gemini:", metadata);
 
       if (metadata) {
         setBiography(metadata.biography);
@@ -1412,9 +1418,14 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
         };
 
         const artistId = name.toLowerCase().replace(/\s+/g, '_');
+        console.log("Saving to Firestore with id:", artistId, newArtistData);
         await saveArtistData(artistId, newArtistData);
+      } else {
+        console.log("Gemini returned null");
       }
     }
+  } catch (error) {
+    console.error("handleFetchMetadata error:", error);
   } finally {
     setFetchingMetadata(false);
   }
