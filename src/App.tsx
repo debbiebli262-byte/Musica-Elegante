@@ -2215,76 +2215,39 @@ function AlbumDetailModal({ album, onClose, onEdit }: { album: Album, onClose: (
                             </div>
                             <div className="space-y-1">
                               {work.movements.map((mov, mIdx) => (
-                                <div key={mIdx} className="flex items-center gap-4 p-2 hover:bg-ink/5 rounded-lg transition-colors group">
-                                  <span className="w-6 text-center text-[10px] font-bold text-ink/20 group-hover:text-gold">{mov.trackNumber}</span>
-                                  {mov.side && <span className="text-[10px] font-bold text-gold/60 w-4">{mov.side}</span>}
-                                  <span className="flex-grow text-xs text-ink/70">{mov.title}</span>
-                                  {mov.duration && <span className="text-[10px] text-ink/30 font-mono">{mov.duration}</span>}
-                                </div>
-                                {(mov.orchestra || mov.conductor || mov.soloists?.length || mov.foundationDate || mov.foundationPlace || mov.founderName || mov.choirMaster || mov.compositionDate || mov.compositionPlace) && (
-                                  <div className="flex flex-wrap gap-x-3 gap-y-1 ml-10 mb-2">
-                                    {mov.orchestra && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Orq:</span> {mov.orchestra}
-                                      </span>
+                                <React.Fragment key={mIdx}>
+                                  <div className="flex items-center gap-4 p-2 hover:bg-ink/5 rounded-lg transition-colors group">
+                                    <span className="w-6 text-center text-[10px] font-bold text-ink/20 group-hover:text-gold">
+                                      {mov.trackNumber}
+                                    </span>
+                                    {mov.side && (
+                                      <span className="text-[10px] font-bold text-gold/60 w-4">{mov.side}</span>
                                     )}
-                                    {mov.conductor && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Dir:</span> {mov.conductor}
-                                      </span>
-                                    )}
-                                    {mov.soloists && mov.soloists.length > 0 && (
-                                      <div className="w-full mt-1 space-y-1">
-                                        {mov.soloists.map((s, idx) => (
-                                          <div key={idx} className="text-[10px] text-ink/40 italic flex flex-wrap gap-x-2">
-                                            <span className="font-bold uppercase tracking-tighter not-italic">Sol:</span>
-                                            <span>{s.name}{s.instrument ? ` (${s.instrument})` : ''}</span>
-                                            {(s.birthDate || s.birthPlace) && (
-                                              <span>
-                                                [N: {s.birthDate || ''}{s.birthPlace ? ` en ${s.birthPlace}` : ''}]
-                                              </span>
-                                            )}
-                                            {(s.deathDate || s.deathPlace) && (
-                                              <span>
-                                                [F: {s.deathDate || ''}{s.deathPlace ? ` en ${s.deathPlace}` : ''}]
-                                              </span>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {mov.founderName && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Fundador:</span> {mov.founderName}
-                                      </span>
-                                    )}
-                                    {mov.choirMaster && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Maestro:</span> {mov.choirMaster}
-                                      </span>
-                                    )}
-                                    {mov.compositionDate && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Comp:</span> {mov.compositionDate}
-                                      </span>
-                                    )}
-                                    {mov.compositionPlace && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Lugar:</span> {mov.compositionPlace}
-                                      </span>
-                                    )}
-                                    {mov.foundationDate && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Fundación:</span> {mov.foundationDate}
-                                      </span>
-                                    )}
-                                    {mov.foundationPlace && (
-                                      <span className="text-[10px] text-ink/40 italic">
-                                        <span className="font-bold uppercase tracking-tighter not-italic mr-1">Lugar:</span> {mov.foundationPlace}
-                                      </span>
+                                    <span className="flex-grow text-xs text-ink/70">{mov.title}</span>
+                                    {mov.duration && (
+                                      <span className="text-[10px] text-ink/30 font-mono">{mov.duration}</span>
                                     )}
                                   </div>
-                                )}
+                              
+                                  {(mov.orchestra ||
+                                    mov.conductor ||
+                                    mov.soloists?.length ||
+                                    mov.foundationDate ||
+                                    mov.foundationPlace ||
+                                    mov.founderName ||
+                                    mov.choirMaster ||
+                                    mov.compositionDate ||
+                                    mov.compositionPlace) && (
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 ml-10 mb-2">
+                                      {mov.orchestra && <span>Orq: {mov.orchestra}</span>}
+                                      {mov.conductor && <span>Dir: {mov.conductor}</span>}
+                                      {mov.compositionDate && <span>Comp: {mov.compositionDate}</span>}
+                                      {mov.compositionPlace && <span>Lugar: {mov.compositionPlace}</span>}
+                                      {mov.foundationDate && <span>Fundación: {mov.foundationDate}</span>}
+                                      {mov.foundationPlace && <span>Lugar: {mov.foundationPlace}</span>}
+                                    </div>
+                                  )}
+                                </React.Fragment>
                               ))}
                             </div>
                           </div>
