@@ -1368,37 +1368,40 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
   }, []);
 
   function normalizeArtistId(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "_");
-}
-  
+    return name
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_");
+  }
+
   const handleFetchMetadata = async () => {
-  console.log("AUTOCOMPLETE CLICKED", name);
+    if (!name) return;
 
-  if (!name) return;
-  setFetchingMetadata(true);
+    console.log("AUTOCOMPLETE CLICKED", name);
+    setFetchingMetadata(true);
 
-  try {
-    console.log("Checking Firestore...");
-    const existingArtist = await getArtistByName(name);
-    console.log("existingArtist:", existingArtist);
+    try {
+      const artistId = normalizeArtistId(name);
 
-    if (existingArtist) {
-      console.log("Loading from Firestore");
+      console.log("Checking Firestore...");
+      const existingArtist = await getArtistByName(name);
+      console.log("existingArtist:", existingArtist);
 
-      setBiography(existingArtist.biography || '');
-      setBirthDate(existingArtist.birthDate || '');
-      setDeathDate(existingArtist.deathDate || '');
-      setBirthPlace(existingArtist.birthPlace || '');
-      setDeathPlace(existingArtist.deathPlace || '');
-      setInstruments(existingArtist.instruments || []);
-      setPeriods(existingArtist.periods || []);
-      setImageUrl(existingArtist.imageUrl || '');
-    } else {
+      if (existingArtist) {
+        console.log("Loading from Firestore");
+        setBiography(existingArtist.biography || '');
+        setBirthDate(existingArtist.birthDate || '');
+        setDeathDate(existingArtist.deathDate || '');
+        setBirthPlace(existingArtist.birthPlace || '');
+        setDeathPlace(existingArtist.deathPlace || '');
+        setInstruments(existingArtist.instruments || []);
+        setPeriods(existingArtist.periods || []);
+        setImageUrl(existingArtist.imageUrl || '');
+        return;
+      }
+
       console.log("Fetching from Gemini...");
       const metadata = await fetchArtistMetadata(name);
       console.log("metadata from Gemini:", metadata);
@@ -1426,46 +1429,35 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
           genre
         };
 
-        const artistId = name.toLowerCase().replace(/\s+/g, '_');
         console.log("Saving to Firestore with id:", artistId, newArtistData);
         await saveArtistData(artistId, newArtistData);
       } else {
         console.log("Gemini returned null");
       }
+    } catch (error) {
+      console.error("Error in autocomplete:", error);
+    } finally {
+      setFetchingMetadata(false);
     }
-  } catch (error) {
-    console.error("handleFetchMetadata error:", error);
-  } finally {
-    setFetchingMetadata(false);
-  }
-};
+  };
 
-  function normalizeArtistId(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "_");
-}
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const data = { 
-        name, 
-        biography, 
-        imageUrl, 
-        genre, 
-        birthDate, 
+      const data = {
+        name,
+        biography,
+        imageUrl,
+        genre,
+        birthDate,
         deathDate,
         birthPlace,
         deathPlace,
         instruments,
         periods
       };
-      
+
       let artistId = artist?.id;
       if (artist) {
         await updateDoc(doc(db, 'artists', artist.id), data);
