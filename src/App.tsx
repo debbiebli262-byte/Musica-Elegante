@@ -1471,7 +1471,7 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
         await updateDoc(doc(db, 'artists', artist.id), data);
         artistId = artist.id;
       } else {
-        const artistIdFromName = name.toLowerCase().trim().replace(/\s+/g, '_');
+        const artistIdFromName = normalizeArtistId(name);
         await setDoc(doc(db, 'artists', artistIdFromName), data, { merge: true });
         artistId = artistIdFromName;
       }
