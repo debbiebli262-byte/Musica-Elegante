@@ -30,23 +30,24 @@ export async function fetchArtistMetadata(
     const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `Provide detailed biographical information for the artist "${artistName}".
-Return ONLY valid JSON with these keys:
-- biography
-- birthDate
-- deathDate
-- birthPlace
-- deathPlace
-- instruments
-- periods
-- imageKeyword
-
-Rules:
-- biography: around 120-180 words
-- birthDate and deathDate: format YYYY-MM-DD when known, otherwise empty string
-- birthPlace and deathPlace: "City, Country" when known, otherwise empty string
-- instruments: array of strings
-- periods: array of strings
-- imageKeyword: a short portrait description`;
+    Write EVERYTHING in Spanish.
+    Return ONLY valid JSON with these keys:
+    - biography
+    - birthDate
+    - deathDate
+    - birthPlace
+    - deathPlace
+    - instruments
+    - periods
+    - imageKeyword
+    
+    Rules:
+    - biography: around 120-180 words, in Spanish
+    - birthDate and deathDate: format YYYY-MM-DD when known, otherwise empty string
+    - birthPlace and deathPlace: "Ciudad, País"
+    - instruments: array of strings in Spanish
+    - periods: array of strings in Spanish
+    - imageKeyword: short portrait description`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
