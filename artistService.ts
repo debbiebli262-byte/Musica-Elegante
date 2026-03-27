@@ -14,25 +14,28 @@ export interface ArtistMetadata {
 }
 
 export async function fetchArtistMetadata(artistName: string): Promise<ArtistMetadata | null> {
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error("VITE_GEMINI_API_KEY missing");
+    return null;
+  }
 
   const ai = new GoogleGenAI({ apiKey });
-  
+
   const prompt = `Provide detailed biographical information for the artist "${artistName}". 
-  Include:
-  - A comprehensive biography (approx 200 words).
-  - Birth date (YYYY-MM-DD).
-  - Death date (YYYY-MM-DD, if applicable).
-  - Birth place (City, Country).
-  - Death place (City, Country, if applicable).
-  - List of primary instruments or vocal styles.
-  - List of musical periods or sub-genres (e.g., Bebop, Baroque).
-  - A descriptive keyword for a high-quality portrait image.
-  Return the data as a JSON object.`;
+Include:
+- A comprehensive biography (approx 200 words).
+- Birth date (YYYY-MM-DD).
+- Death date (YYYY-MM-DD, if applicable).
+- Birth place (City, Country).
+- Death place (City, Country, if applicable).
+- List of primary instruments or vocal styles.
+- List of musical periods or sub-genres (e.g., Bebop, Baroque).
+- A descriptive keyword for a high-quality portrait image.
+Return the data as a JSON object.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -54,7 +57,13 @@ export async function fetchArtistMetadata(artistName: string): Promise<ArtistMet
       }
     });
 
+    console.log("Gemini raw response:", response);
+    console.log("Gemini text:", response.text);
+
+    if (!response.text) return null;
+
     const data = JSON.parse(response.text);
+
     return {
       biography: data.biography,
       birthDate: data.birthDate,
@@ -63,8 +72,11 @@ export async function fetchArtistMetadata(artistName: string): Promise<ArtistMet
       deathPlace: data.deathPlace || '',
       instruments: data.instruments || [],
       periods: data.periods || [],
-      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(artistName + ' portrait ' + data.imageKeyword)}/800/800`
+      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(
+        artistName + ' portrait ' + data.imageKeyword
+      )}/800/800`
     };
+
   } catch (error) {
     console.error("Error fetching artist metadata:", error);
     return null;
