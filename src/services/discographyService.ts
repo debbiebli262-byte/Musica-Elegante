@@ -1,4 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { db } from "../firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -8,8 +10,24 @@ export interface AlbumData {
   imageUrl: string;
 }
 
+function normalizeAlbumId(title: string, artistId: string) {
+  return (
+    artistId +
+    "_" +
+    title
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/[^\w_]/g, "")
+  );
+}
+
 export async function fetchArtistDiscography(
-  artistName: string
+  artistName: string,
+  artistId: string,
+  genre: string
 ): Promise<AlbumData[]> {
   console.log("DISCOGRAPHY SERVICE RUNNING", artistName);
   console.log("API key exists:", !!apiKey);
@@ -54,13 +72,36 @@ Devuelve SOLO un array JSON válido con objetos que tengan:
 
     const albums = JSON.parse(response.text);
 
-    return albums.map((album: any) => ({
-      title: album.title,
-      releaseYear: album.releaseYear,
-      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(
+    const albumObjects: AlbumData[] = [];
+
+    for (const album of albums) {
+      const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(
         `${album.title} ${album.imageKeyword || "album"}`
-      )}/800/800`
-    }));
+      )}/800/800`;
+
+      const albumId = normalizeAlbumId(album.title, artistId);
+
+      const albumData = {
+        title: album.title,
+        releaseYear: Number(album.releaseYear),
+        artistId: artistId,
+        genre: genre,
+        imageUrl: imageUrl
+      };
+
+      console.log("Saving album:", albumId, albumData);
+
+      await setDoc(doc(db, "albums", albumId), albumData, { merge: true });
+
+      albumObjects.push({
+        title: album.title,
+        releaseYear: album.releaseYear,
+        imageUrl: imageUrl
+      });
+    }
+
+    return albumObjects;
+
   } catch (error) {
     console.error("Error fetching discography:", error);
     return [];
