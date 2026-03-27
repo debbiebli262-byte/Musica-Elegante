@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 export interface AlbumData {
   title: string;
@@ -8,18 +8,26 @@ export interface AlbumData {
   imageUrl: string;
 }
 
-export async function fetchArtistDiscography(artistName: string): Promise<AlbumData[]> {
+export async function fetchArtistDiscography(
+  artistName: string
+): Promise<AlbumData[]> {
+  console.log("DISCOGRAPHY SERVICE RUNNING", artistName);
+  console.log("API key exists:", !!apiKey);
+
   if (!apiKey) {
-    console.error("GEMINI_API_KEY is missing");
+    console.error("VITE_GEMINI_API_KEY is missing");
     return [];
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  
-  const prompt = `Provide a list of the top 10 most famous albums by the artist "${artistName}".
-Return only a valid JSON array of objects with keys: "title", "releaseYear", and "imageKeyword".`;
-
   try {
+    const ai = new GoogleGenAI({ apiKey });
+
+    const prompt = `Escribe una lista de los 10 álbumes o grabaciones más conocidos del artista "${artistName}".
+Devuelve SOLO un array JSON válido con objetos que tengan:
+- title
+- releaseYear
+- imageKeyword`;
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -40,14 +48,18 @@ Return only a valid JSON array of objects with keys: "title", "releaseYear", and
       }
     });
 
-    const text = response.text;
-    if (!text) return [];
+    console.log("Gemini discography text:", response.text);
 
-    const albums = JSON.parse(text);
+    if (!response.text) return [];
+
+    const albums = JSON.parse(response.text);
+
     return albums.map((album: any) => ({
       title: album.title,
       releaseYear: album.releaseYear,
-      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(album.title + ' ' + album.imageKeyword)}/800/800`
+      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(
+        `${album.title} ${album.imageKeyword || "album"}`
+      )}/800/800`
     }));
   } catch (error) {
     console.error("Error fetching discography:", error);
