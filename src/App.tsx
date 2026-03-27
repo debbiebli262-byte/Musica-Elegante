@@ -1368,6 +1368,8 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
   }, []);
 
   const handleFetchMetadata = async () => {
+    console.log("AUTOCOMPLETE CLICKED", name);
+    
   if (!name) return;
   setFetchingMetadata(true);
 
