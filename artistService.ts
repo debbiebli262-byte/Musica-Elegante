@@ -1,4 +1,13 @@
-import { GoogleGenAI, Type } from "@google/genai";
+export async function fetchArtistMetadata(artistName: string): Promise<ArtistMetadata | null> {
+  alert("ARTIST SERVICE NEW VERSION");
+  console.log("ARTIST SERVICE NEW VERSION", artistName);
+
+  if (!apiKey) {
+    console.error("VITE_GEMINI_API_KEY missing");
+    return null;
+  }
+
+ import { GoogleGenAI, Type } from "@google/genai";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -112,4 +121,5 @@ Rules:
     console.error("Error fetching artist metadata:", error);
     return null;
   }
+}
 }
