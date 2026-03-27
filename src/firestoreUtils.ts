@@ -1,5 +1,6 @@
 import { auth } from './firebase';
 import { FirestoreErrorInfo } from './types';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export enum OperationType {
   CREATE = 'create',
@@ -31,4 +32,22 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
+
+  import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from './firebase';
+
+export async function getArtistByName(name: string) {
+  const artistsRef = collection(db, 'artists');
+  const q = query(artistsRef, where('name', '==', name));
+  const snapshot = await getDocs(q);
+
+  if (!snapshot.empty) {
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+  }
+  return null;
+}
+
+export async function saveArtistData(id: string, data: any) {
+  await setDoc(doc(db, 'artists', id), data, { merge: true });
+}
 }
