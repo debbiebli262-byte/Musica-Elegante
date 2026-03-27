@@ -7,6 +7,7 @@ import imageCompression from 'browser-image-compression';
 import { db, storage, auth } from './firebase';
 import { Artist, Album, CollectionItem, Genre, Musician, Track, Disc, Work, Movement } from './types';
 import { OperationType, handleFirestoreError } from './firestoreUtils';
+import { getArtistByName, saveArtistData } from './firestoreUtils';
 import { fetchArtistDiscography } from './services/discographyService';
 import { fetchArtistMetadata } from './services/artistService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1367,40 +1368,55 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
   }, []);
 
   const handleFetchMetadata = async () => {
-    if (!name) return;
-    setFetchingMetadata(true);
-    try {
+  if (!name) return;
+  setFetchingMetadata(true);
+
+  try {
+    const existingArtist = await getArtistByName(name);
+
+    if (existingArtist) {
+      setBiography(existingArtist.biography || '');
+      setBirthDate(existingArtist.birthDate || '');
+      setDeathDate(existingArtist.deathDate || '');
+      setBirthPlace(existingArtist.birthPlace || '');
+      setDeathPlace(existingArtist.deathPlace || '');
+      setInstruments(existingArtist.instruments || []);
+      setPeriods(existingArtist.periods || []);
+      setImageUrl(existingArtist.imageUrl || '');
+    } else {
       const metadata = await fetchArtistMetadata(name);
+
       if (metadata) {
         setBiography(metadata.biography);
         setBirthDate(metadata.birthDate);
         setDeathDate(metadata.deathDate);
         setBirthPlace(metadata.birthPlace);
         setDeathPlace(metadata.deathPlace);
-        if (metadata.instruments && metadata.instruments.length > 0) {
-          setInstruments(prev => {
-            const combined = [...prev];
-            metadata.instruments.forEach(i => {
-              if (!combined.includes(i)) combined.push(i);
-            });
-            return combined;
-          });
-        }
-        if (metadata.periods && metadata.periods.length > 0) {
-          setPeriods(prev => {
-            const combined = [...prev];
-            metadata.periods.forEach(p => {
-              if (!combined.includes(p)) combined.push(p);
-            });
-            return combined;
-          });
-        }
+        setInstruments(metadata.instruments || []);
+        setPeriods(metadata.periods || []);
         setImageUrl(metadata.imageUrl);
+
+        const newArtistData = {
+          name,
+          biography: metadata.biography,
+          birthDate: metadata.birthDate,
+          deathDate: metadata.deathDate,
+          birthPlace: metadata.birthPlace,
+          deathPlace: metadata.deathPlace,
+          instruments: metadata.instruments || [],
+          periods: metadata.periods || [],
+          imageUrl: metadata.imageUrl,
+          genre
+        };
+
+        const artistId = name.toLowerCase().replace(/\s+/g, '_');
+        await saveArtistData(artistId, newArtistData);
       }
-    } finally {
-      setFetchingMetadata(false);
     }
-  };
+  } finally {
+    setFetchingMetadata(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
