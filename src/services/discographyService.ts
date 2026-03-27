@@ -16,10 +16,8 @@ export async function fetchArtistDiscography(artistName: string): Promise<AlbumD
 
   const ai = new GoogleGenAI({ apiKey });
   
-  const prompt = `Provide a list of the top 10 most famous albums by the artist "${artistName}". 
-  For each album, include the title and the release year. 
-  Also, provide a descriptive keyword for each album that can be used to generate a relevant cover image using a placeholder service like picsum.photos.
-  Return the data as a JSON array of objects with keys: "title", "releaseYear", and "imageKeyword".`;
+  const prompt = `Provide a list of the top 10 most famous albums by the artist "${artistName}".
+Return only a valid JSON array of objects with keys: "title", "releaseYear", and "imageKeyword".`;
 
   try {
     const response = await ai.models.generateContent({
