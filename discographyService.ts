@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY || '';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export interface AlbumData {
   title: string;
