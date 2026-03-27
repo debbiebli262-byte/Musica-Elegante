@@ -15,6 +15,15 @@ import { Music, Disc as DiscIcon, Heart, User as UserIcon, LogIn, LogOut, Plus, 
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+function normalizeArtistId(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+}
+
 // --- Connection Test ---
 async function testConnection() {
   try {
@@ -1438,7 +1447,7 @@ function normalizeAlbumId(title: string, artistId: string) {
           genre
         };
 
-        const artistId = name.toLowerCase().replace(/\s+/g, '_');
+        const artistId = normalizeArtistId(name);
         console.log("Saving to Firestore with id:", artistId, newArtistData);
         await saveArtistData(artistId, newArtistData);
       } else {
