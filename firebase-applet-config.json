@@ -1,21 +1,10 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCd1TJp86BnZ8RYJnKpBKDbwDehj8BbDck",
-  authDomain: "archivo-musical-8e416.firebaseapp.com",
-  projectId: "archivo-musical-8e416",
-  storageBucket: "archivo-musical-8e416.firebasestorage.app",
-  messagingSenderId: "909741133592",
-  appId: "1:909741133592:web:bfe08781b2710c9521986d",
-  measurementId: "G-TCRE81CGB9"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+{
+  "projectId": "archivo-musical-8e416",
+  "appId": "1:909741133592:web:bfe08781b2710c9521986d",
+  "apiKey": "AIzaSyCd1TJp86BnZ8RYJnKpBKDbwDehj8BbDck",
+  "authDomain": "archivo-musical-8e416.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "archivo-musical-8e416.firebasestorage.app",
+  "messagingSenderId": "909741133592",
+  "measurementId": "G-TCRE81CGB9"
+}
