@@ -1367,6 +1367,15 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
     return unsubscribe;
   }, []);
 
+  function normalizeArtistId(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+}
+  
   const handleFetchMetadata = async () => {
   console.log("AUTOCOMPLETE CLICKED", name);
 
@@ -1431,6 +1440,15 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
   }
 };
 
+  function normalizeArtistId(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+}
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
