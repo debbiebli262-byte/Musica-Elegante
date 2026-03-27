@@ -1725,9 +1725,9 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      const img = e.currentTarget as HTMLImageElement;
+                      const img = e.currentTarget;
                       img.onerror = null;
-                      img.src = '/fallback-image.png';
+                      img.src = '';
                     }}
                   />
                 </div>
