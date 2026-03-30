@@ -1272,7 +1272,7 @@ function SearchPage() {
       if (sortBy === 'artist') return String(a.artistName || '').localeCompare(String(b.artistName || ''));
       if (sortBy === 'title') return String(a.title || '').localeCompare(String(b.title || ''));
       return String(a.label || '').localeCompare(String(b.label || ''));
-    });ט
+    });
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16 md:py-20 space-y-10">
