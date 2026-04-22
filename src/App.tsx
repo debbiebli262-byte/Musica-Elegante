@@ -41,7 +41,6 @@ function slugifyArtistId(name: string) {
     .replace(/^_+|_+$/g, '');
 }
 
-<<<<<<< HEAD
 function slugifyAlbumId(
   artistName: string,
   title: string,
@@ -56,8 +55,6 @@ function slugifyAlbumId(
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
-=======
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 
 type ImportStatus = 'draft' | 'approved' | 'failed';
 
@@ -82,7 +79,6 @@ interface ImportJobRecord {
 
 
 // --- Components ---
-<<<<<<< HEAD
 const PROMPT_TEXT = `Estoy construyendo un sitio web que importa archivos de Word de una biblioteca de música clásica (álbumes, obras, grabaciones, intérpretes, etc.).
 
 Quiero que reorganices el archivo que te adjunto para que sea muy fácil de leer para un sistema y para una IA.
@@ -142,9 +138,6 @@ Importante:
 - No omitas ningún detalle del archivo original
 
 Al final, devuélveme únicamente el texto reorganizado, sin explicaciones adicionales.`;
-=======
-
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 
 function Navbar() {
   const location = useLocation();
@@ -1488,7 +1481,6 @@ async function uploadWordDocument(file: File): Promise<ParsedWordImport> {
     body: formData,
   });
 
-<<<<<<< HEAD
   const rawText = await response.text();
 
   let payload: any = null;
@@ -1499,9 +1491,6 @@ async function uploadWordDocument(file: File): Promise<ParsedWordImport> {
       `Server returned a non-JSON response (${response.status}). Body: ${rawText.slice(0, 300)}`
     );
   }
-=======
-  const payload = await response.json();
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 
   if (!response.ok) {
     throw new Error(payload?.error || 'No se pudo procesar el archivo Word.');
@@ -1518,10 +1507,7 @@ function ImportWordPage() {
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [message, setMessage] = useState<string>('');
-<<<<<<< HEAD
   const [copied, setCopied] = useState(false);
-=======
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 
   useEffect(() => {
     const importsQuery = query(collection(db, 'import_jobs'));
@@ -1596,11 +1582,7 @@ function ImportWordPage() {
     setMessage('');
 
     try {
-<<<<<<< HEAD
       const artistData = parsedData.composer;
-=======
-      const artistData = parsedData.artist;
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
       let artistId = '';
 
       if (artistData?.name) {
@@ -1626,7 +1608,6 @@ function ImportWordPage() {
 
       if (parsedData.albums?.length) {
         for (const rawAlbum of parsedData.albums) {
-<<<<<<< HEAD
           const finalArtistName = rawAlbum.artistName || artistData?.name || 'unknown_artist';
 const finalTitle = rawAlbum.title || 'Untitled import';
 
@@ -1680,48 +1661,6 @@ await setDoc(
   },
   { merge: true }
 );
-=======
-          const newAlbumRef = doc(collection(db, 'albums'));
-          await setDoc(newAlbumRef, {
-            id: newAlbumRef.id,
-            artistId: rawAlbum.artistId || artistId || '',
-            artistName: rawAlbum.artistName || artistData?.name || '',
-            title: rawAlbum.title || 'Untitled import',
-            genre: rawAlbum.genre || artistData?.genre || 'classical',
-            releaseYear: rawAlbum.releaseYear || '',
-            releaseDate: rawAlbum.releaseDate || '',
-            recordingDates: rawAlbum.recordingDates || '',
-            location: rawAlbum.location || '',
-            label: rawAlbum.label || '',
-            catalogNumber: rawAlbum.catalogNumber || '',
-            originalCatalogNumber: rawAlbum.originalCatalogNumber || '',
-            editionCatalogNumber: rawAlbum.editionCatalogNumber || '',
-            editionDate: rawAlbum.editionDate || '',
-            masteringEngineer: rawAlbum.masteringEngineer || '',
-            discCount: rawAlbum.discCount || 1,
-            formats: rawAlbum.formats || [],
-            orchestra: rawAlbum.orchestra || '',
-            conductor: rawAlbum.conductor || '',
-            soloists: rawAlbum.soloists || [],
-            compositionDate: rawAlbum.compositionDate || '',
-            compositionPlace: rawAlbum.compositionPlace || '',
-            country: rawAlbum.country || '',
-            originalLabel: rawAlbum.originalLabel || '',
-            originalYear: rawAlbum.originalYear || '',
-            foundationDate: rawAlbum.foundationDate || '',
-            foundationPlace: rawAlbum.foundationPlace || '',
-            founderName: rawAlbum.founderName || '',
-            choirMaster: rawAlbum.choirMaster || '',
-            engineer: rawAlbum.engineer || '',
-            producer: rawAlbum.producer || '',
-            musicians: rawAlbum.musicians || [],
-            tracks: rawAlbum.tracks || [],
-            discs: rawAlbum.discs || [],
-            anecdotes: rawAlbum.anecdotes || '',
-            imageUrl: rawAlbum.imageUrl || '',
-            availability: rawAlbum.availability || '',
-          });
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
         }
       }
 
@@ -1810,7 +1749,6 @@ await setDoc(
             </button>
           </div>
 
-<<<<<<< HEAD
           <div className="mt-6 rounded-2xl border border-ink/10 bg-ink/[0.02] p-5 space-y-4">
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">¿Tu archivo está desordenado?</h3>
@@ -1849,8 +1787,6 @@ await setDoc(
             </div>
             </div>
 
-=======
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
           <div className="rounded-2xl bg-ink/[0.03] p-5 space-y-3 text-sm text-ink/70 leading-relaxed">
             <div className="font-medium text-ink">Pipeline sugerido</div>
             <ol className="space-y-2 list-decimal pl-5">
@@ -1881,11 +1817,7 @@ await setDoc(
                 <div className="space-y-3">
                   <h3 className="text-xs uppercase tracking-widest font-bold text-gold">Artista</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-<<<<<<< HEAD
                     <div className="rounded-2xl bg-ink/[0.03] p-4"><span className="text-ink/45">Nombre</span><div className="font-medium mt-1">{parsedData?.composer?.name || extractedArtist?.name || '—'}</div></div>
-=======
-                    <div className="rounded-2xl bg-ink/[0.03] p-4"><span className="text-ink/45">Nombre</span><div className="font-medium mt-1">{extractedArtist?.name || '—'}</div></div>
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
                     <div className="rounded-2xl bg-ink/[0.03] p-4"><span className="text-ink/45">Género</span><div className="font-medium mt-1">{extractedArtist?.genre || '—'}</div></div>
                     <div className="rounded-2xl bg-ink/[0.03] p-4"><span className="text-ink/45">Nacimiento</span><div className="font-medium mt-1">{extractedArtist?.birthDate || '—'} {extractedArtist?.birthPlace ? `· ${extractedArtist.birthPlace}` : ''}</div></div>
                     <div className="rounded-2xl bg-ink/[0.03] p-4"><span className="text-ink/45">Fallecimiento</span><div className="font-medium mt-1">{extractedArtist?.deathDate || '—'} {extractedArtist?.deathPlace ? `· ${extractedArtist.deathPlace}` : ''}</div></div>
@@ -1905,13 +1837,9 @@ await setDoc(
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <h4 className="font-serif text-2xl">{album.title || `Grabación ${index + 1}`}</h4>
-<<<<<<< HEAD
                               <p className="text-sm text-ink/60">
                                 {album.artistName || parsedData?.composer?.name || extractedArtist?.name || 'Artista no identificado'}
                               </p>
-=======
-                              <p className="text-sm text-ink/60">{album.artistName || extractedArtist?.name || 'Artista no identificado'}</p>
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
                             </div>
                             <span className="text-xs uppercase tracking-widest font-bold text-gold">{album.genre || extractedArtist?.genre || '—'}</span>
                           </div>
@@ -2000,10 +1928,7 @@ function ComparePage() {
   const [selectedAlbum1, setSelectedAlbum1] = useState('');
   const [selectedAlbum2, setSelectedAlbum2] = useState('');
   const [selectedAlbum3, setSelectedAlbum3] = useState('');
-<<<<<<< HEAD
   
-=======
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 
   useEffect(() => {
     const q = query(collection(db, 'albums'));
