@@ -1769,31 +1769,19 @@ await setDoc(
           </div>
 
           <label className="block rounded-2xl border border-dashed border-ink/20 bg-ink/[0.03] p-6 hover:border-gold/50 transition-colors">
-<<<<<<< HEAD
             <input type="file" accept=".doc,.docx" className="hidden" onChange={handleFileChange} />
-=======
-            <input type="file" accept=".docx" className="hidden" onChange={handleFileChange} />
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-ink text-paper flex items-center justify-center">
                 <Upload size={20} />
               </div>
               <div>
                 <p className="font-medium text-ink">{selectedFile ? selectedFile.name : 'Haz clic para elegir un archivo Word'}</p>
-<<<<<<< HEAD
                 <p className="text-sm text-ink/50">Formato admitido: .doc y .docx</p>
-=======
-                <p className="text-sm text-ink/50">Formato admitido: .docx</p>
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
               </div>
             </div>
           </label>
 
-<<<<<<< HEAD
           <div className="flex flex-wrap gap-3">
-=======
-          <div className="flex flex-col sm:flex-row gap-3">
->>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
             <button
               type="button"
               onClick={handleProcessFile}
