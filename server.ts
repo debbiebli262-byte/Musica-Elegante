@@ -6,14 +6,20 @@ import multer from "multer";
 import mammoth from "mammoth";
 import fs from "fs";
 import dotenv from "dotenv";
+<<<<<<< HEAD
 import { GoogleGenAI, Type } from "@google/genai";
 import os from "os";
 import { execFile } from "child_process";
 import { promisify } from "util";
+=======
+
+dotenv.config();
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+<<<<<<< HEAD
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 console.log("Loaded GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "YES" : "NO");
 
@@ -262,6 +268,10 @@ Document text:
     : new Error("Failed to parse Word text with AI");
 }
 
+=======
+const upload = multer({ dest: "uploads/" });
+
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -270,18 +280,25 @@ async function startServer() {
 
   app.get("/api/resolve-image", async (req, res) => {
     const { url } = req.query;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
     if (!url || typeof url !== "string") {
       return res.status(400).json({ error: "URL is required" });
     }
 
     try {
       const response = await fetch(url);
+<<<<<<< HEAD
 
       if (!response.ok) {
         throw new Error("Failed to fetch site");
       }
 
+=======
+      if (!response.ok) throw new Error("Failed to fetch site");
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
       const html = await response.text();
 
       const ogImage =
@@ -307,13 +324,17 @@ async function startServer() {
       }
 
       const firstImg = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
       if (firstImg) {
         const baseUrl = new URL(url);
         resolvedUrl = new URL(firstImg, baseUrl.origin).toString();
         return res.json({ imageUrl: resolvedUrl });
       }
 
+<<<<<<< HEAD
       return res.status(404).json({ error: "No image found on this site" });
     } catch (error) {
       console.error("Error resolving image:", error);
@@ -330,10 +351,23 @@ async function startServer() {
 
       console.log("Uploading file:", originalName);
 
+=======
+      res.status(404).json({ error: "No image found on this site" });
+    } catch (error) {
+      console.error("Error resolving image:", error);
+      res.status(500).json({ error: "Failed to resolve image from URL" });
+    }
+  });
+
+  app.post("/api/upload-word", upload.single("file"), async (req, res) => {
+    try {
+      const filePath = req.file?.path;
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
       if (!filePath) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
+<<<<<<< HEAD
       const extension = path.extname(originalName).toLowerCase();
 
       if (![".doc", ".docx"].includes(extension)) {
@@ -367,6 +401,20 @@ async function startServer() {
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
+=======
+      const result = await mammoth.extractRawText({ path: filePath });
+      const text = result.value;
+
+      fs.unlinkSync(filePath);
+
+      return res.json({
+        success: true,
+        extractedText: text,
+      });
+    } catch (error) {
+      console.error("Error processing Word file:", error);
+      return res.status(500).json({ error: "Failed to process Word file" });
+>>>>>>> 1f36b787d9dc543b56a56787e11393842b532499
     }
   });
 
