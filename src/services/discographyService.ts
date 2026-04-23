@@ -2,8 +2,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-
 export interface AlbumData {
   title: string;
   releaseYear: string;
@@ -31,11 +29,6 @@ export async function fetchArtistDiscography(
 ): Promise<AlbumData[]> {
   console.log("DISCOGRAPHY SERVICE RUNNING", artistName);
   console.log("API key exists:", !!apiKey);
-
-  if (!apiKey) {
-    console.error("VITE_GEMINI_API_KEY is missing");
-    return [];
-  }
 
   try {
     const ai = new GoogleGenAI({ apiKey });

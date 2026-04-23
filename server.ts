@@ -246,7 +246,27 @@ Document text:
         throw new Error("AI returned empty response");
       }
 
-      return JSON.parse(response.text);
+      let cleanedText = response.text.trim();
+
+      if (cleanedText.startsWith("```json")) {
+        cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+      }
+
+      if (cleanedText.startsWith("```")) {
+        cleanedText = cleanedText.replace(/^```\s*/, "").replace(/```$/, "").trim();
+      }
+
+      const firstBrace = cleanedText.indexOf("{");
+      const lastBrace = cleanedText.lastIndexOf("}");
+
+      if (firstBrace === -1 || lastBrace === -1) {
+        console.error("AI did not return JSON:", cleanedText);
+        throw new Error("AI did not return JSON");
+      }
+
+      cleanedText = cleanedText.slice(firstBrace, lastBrace + 1);
+
+      return JSON.parse(cleanedText);
     } catch (error) {
       lastError = error;
       console.error(`AI attempt ${attempt} failed:`, error);
@@ -267,6 +287,86 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+
+  app.get("/api/artist-metadata", async (req, res) => {
+  try {
+    if (!ai) {
+      return res.status(500).json({ error: "GEMINI_API_KEY is missing" });
+    }
+
+    const artistName = String(req.query.name || "").trim();
+
+    if (!artistName) {
+      return res.status(400).json({ error: "Artist name is required" });
+    }
+
+    const prompt = `Escribe una biografía del artista "${artistName}" en español.
+
+Devuelve SOLO JSON válido con estas claves:
+{
+  "biography": "",
+  "birthDate": "",
+  "deathDate": "",
+  "birthPlace": "",
+  "deathPlace": "",
+  "instruments": [],
+  "periods": [],
+  "imageKeyword": ""
+}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    if (!response.text) {
+      return res.status(500).json({ error: "Gemini returned empty response" });
+    }
+
+    let cleanedText = response.text.trim();
+
+    if (cleanedText.startsWith("```json")) {
+      cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    }
+
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```\s*/, "").replace(/```$/, "").trim();
+    }
+
+    const firstBrace = cleanedText.indexOf("{");
+    const lastBrace = cleanedText.lastIndexOf("}");
+
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error("Gemini did not return JSON:", cleanedText);
+      return res.status(500).json({ error: "Invalid AI response" });
+    }
+
+    cleanedText = cleanedText.slice(firstBrace, lastBrace + 1);
+
+    const data = JSON.parse(cleanedText);
+
+    return res.json({
+      biography: data.biography || "",
+      birthDate: data.birthDate || "",
+      deathDate: data.deathDate || "",
+      birthPlace: data.birthPlace || "",
+      deathPlace: data.deathPlace || "",
+      instruments: Array.isArray(data.instruments) ? data.instruments : [],
+      periods: Array.isArray(data.periods) ? data.periods : [],
+      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(
+        `${artistName} portrait ${data.imageKeyword || "musician"}`
+      )}/800/800`,
+    });
+  } catch (error) {
+    console.error("Artist metadata error:", error);
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : "Unexpected error",
+    });
+  }
+});
 
   app.get("/api/resolve-image", async (req, res) => {
     const { url } = req.query;
@@ -368,7 +468,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/discogs/search-by-catalog", async (req, res) => {
+  app.get("/api/discogs-search-by-catalog", async (req, res) => {
   try {
     const rawCatno = String(req.query.catno || "").trim();
 
