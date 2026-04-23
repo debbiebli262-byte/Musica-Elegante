@@ -2,7 +2,7 @@ import React, { useState, useEffect, createContext, useContext, ReactNode, useCa
 import { HashRouter as Router, Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, query, where, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, getDocFromServer, getDocs } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { ref, uploadString, getDownloadURL, uploadBytesResumable, uploadBytes } from 'firebase/storage';
+import { ref, uploadString, getDownloadURL, uploadBytes } from 'firebase/storage';
 import imageCompression from 'browser-image-compression';
 import { db, storage, auth } from './firebase';
 import { Artist, Album, CollectionItem, Genre, Musician, Track, Disc, Work, Movement } from './types';
@@ -2227,91 +2227,53 @@ function ArtistModal({ artist, genre, onClose }: { artist?: Artist, genre: Genre
     console.log("File size:", file.size, "bytes");
     
     setUploading(true);
-    setUploadProgress(10);
-    
+setUploadProgress(10);
+
+try {
+  let fileToUpload: File | Blob = file;
+
+  // Compress image if it's large
+  if (file.size > 200 * 1024) {
+    console.log("Compressing image...");
     try {
-      let fileToUpload: File | Blob = file;
-      
-      // Compress image if it's large
-      if (file.size > 200 * 1024) {
-        console.log("Compressing image...");
-        try {
-          const options = {
-            maxSizeMB: 0.5,
-            maxWidthOrHeight: 1200,
-            useWebWorker: true
-          };
-          fileToUpload = await imageCompression(file, options);
-          console.log("Compressed size:", fileToUpload.size, "bytes");
-        } catch (compressionError) {
-          console.error("Compression failed, using original:", compressionError);
-          fileToUpload = file;
-        }
-      }
-
-      setUploadProgress(20);
-      console.log("Converting to Base64...");
-      
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        const base64String = base64data.split(',')[1];
-        
-        const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-        const storageRef = ref(storage, `images/${fileName}`);
-        console.log("Storage reference path:", storageRef.fullPath);
-
-        console.log("Uploading to Firebase Storage (Resumable)...");
-        const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-
-        // Add a 60-second timeout
-        const timeoutId = setTimeout(() => {
-          console.error("Upload timed out after 60 seconds");
-          uploadTask.cancel();
-          alert("La subida tardó demasiado. Por favor, comprueba tu conexión o intenta con una imagen más pequeña.");
-          setUploading(false);
-        }, 60000);
-
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log("Upload progress:", progress.toFixed(2) + "%");
-            setUploadProgress(20 + (progress * 0.75)); // Map 0-100 to 20-95
-          }, 
-          (error: any) => {
-            clearTimeout(timeoutId);
-            console.error("CRITICAL ERROR during upload:", error);
-            let errorMessage = "Error al subir la imagen.";
-            if (error.code) errorMessage += `\nCódigo: ${error.code}`;
-            if (error.message) errorMessage += `\nMensaje: ${error.message}`;
-            alert(errorMessage);
-            setUploading(false);
-          }, 
-          async () => {
-            clearTimeout(timeoutId);
-            console.log("Upload successful! Getting download URL...");
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log("Download URL obtained:", url);
-            setImageUrl(url);
-            setUploadProgress(100);
-            setUploading(false);
-            console.log("--- Artist Image Upload Complete ---");
-          }
-        );
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
       };
-      reader.onerror = (e) => {
-        console.error("Error reading file:", e);
-        alert("Error al leer el archivo.");
-        setUploading(false);
-      };
-      reader.readAsDataURL(fileToUpload);
-    } catch (error: any) {
-      console.error("CRITICAL ERROR in handleFileUpload:", error);
-      alert("Error inesperado. Por favor, inténtalo de nuevo.");
-      setUploading(false);
+      fileToUpload = await imageCompression(file, options);
+      console.log("Compressed size:", fileToUpload.size, "bytes");
+    } catch (compressionError) {
+      console.error("Compression failed, using original:", compressionError);
+      fileToUpload = file;
     }
-  };
+  }
 
+  setUploadProgress(20);
+
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+  const storageRef = ref(storage, `images/${fileName}`);
+  console.log("Storage reference path:", storageRef.fullPath);
+
+  console.log("Uploading to Firebase Storage...");
+  await uploadBytes(storageRef, fileToUpload);
+
+  const url = await getDownloadURL(storageRef);
+  console.log("Download URL obtained:", url);
+
+  setImageUrl(url);
+  setUploadProgress(100);
+  setUploading(false);
+  console.log("--- Artist Image Upload Complete ---");
+} catch (error: any) {
+  console.error("CRITICAL ERROR in handleFileUpload:", error);
+  let errorMessage = "Error al subir la imagen.";
+  if (error.code) errorMessage += `\nCódigo: ${error.code}`;
+  if (error.message) errorMessage += `\nMensaje: ${error.message}`;
+  alert(errorMessage);
+  setUploading(false);
+}
+};
   const resolveImage = async () => {
     if (!imageUrl || imageUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i)) return;
     setResolving(true);
@@ -3451,41 +3413,22 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
       const storageRef = ref(storage, `images/${fileName}`);
       console.log("Album storage reference path:", storageRef.fullPath);
 
-      console.log("Uploading album image to Firebase Storage (Resumable)...");
-      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+      console.log("Uploading to Firebase Storage...");
+      try {
+        await uploadBytes(storageRef, fileToUpload);
 
-      const timeoutId = setTimeout(() => {
-        console.error("Album upload timed out after 60 seconds");
-        uploadTask.cancel();
-        alert("La subida tardó demasiado. Por favor, inténtalo de nuevo.");
+        const downloadURL = await getDownloadURL(storageRef);
+        console.log("Upload complete. Download URL:", downloadURL);
+
+        setImageUrl(downloadURL);
+        setUploadProgress(100);
         setUploading(false);
-      }, 60000);
-
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Album upload progress:", progress.toFixed(2) + "%");
-          setUploadProgress(20 + (progress * 0.75));
-        }, 
-        (error: any) => {
-          clearTimeout(timeoutId);
-          console.error("CRITICAL ERROR during album upload:", error);
-          let errorMessage = "Error al subir la portada.";
-          if (error.code) errorMessage += `\nCódigo: ${error.code}`;
-          alert(errorMessage);
-          setUploading(false);
-        }, 
-        async () => {
-          clearTimeout(timeoutId);
-          console.log("Album upload successful! Getting download URL...");
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log("Album download URL obtained:", url);
-          setImageUrl(url);
-          setUploadProgress(100);
-          setUploading(false);
-          console.log("--- Album Image Upload Complete ---");
-        }
-      );
+      } catch (error) {
+        console.error("Upload failed:", error);
+        alert("Error al subir la imagen.");
+        setUploading(false);
+      }
+        
     } catch (error: any) {
       console.error("CRITICAL ERROR in album handleFileUpload:", error);
       alert("Error inesperado. Por favor, inténtalo de nuevo.");
