@@ -2274,6 +2274,68 @@ try {
   setUploading(false);
 }
 };
+
+const handleFetchFromDiscogs = async () => {
+  if (!catalogNumber.trim()) {
+    alert("Introduce un número de catálogo primero.");
+    return;
+  }
+
+  setIsFetchingDiscogs(true);
+
+  try {
+    const response = await fetch(
+      `/api/discogs/search-by-catalog?catno=${encodeURIComponent(catalogNumber)}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error || "No se pudo buscar en Discogs.");
+    }
+
+    if (data.title) setTitle(data.title);
+    if (data.year) setReleaseYear(String(data.year));
+    if (data.country) setCountry(data.country);
+    if (data.label) setLabel(data.label);
+    if (data.catno) setCatalogNumber(data.catno);
+
+    if (data.format) {
+      const normalizedFormats = data.format
+        .split(",")
+        .map((item: string) => item.trim())
+        .filter(Boolean)
+        .map((item: string) => {
+          const lower = item.toLowerCase();
+          if (lower.includes("cd")) return "CD";
+          if (lower.includes("vinyl") || lower.includes("lp")) return "Vinilo";
+          if (lower.includes("dvd")) return "DVD";
+          if (lower.includes("blu-ray") || lower.includes("bluray")) return "Bluray";
+          return "CD";
+        }) as ('CD' | 'Vinilo' | 'DVD' | 'Bluray')[];
+
+      if (normalizedFormats.length) {
+        setFormats([...new Set(normalizedFormats)]);
+      }
+    }
+
+    if (data.coverImage || data.thumb) {
+      setImageUrl(data.coverImage || data.thumb);
+    }
+
+    if (data.discogsUrl) {
+      setDiscogsUrl(data.discogsUrl);
+    }
+
+    alert("Datos cargados desde Discogs.");
+  } catch (error: any) {
+    console.error("Discogs fetch error:", error);
+    alert(error.message || "No se pudo obtener información desde Discogs.");
+  } finally {
+    setIsFetchingDiscogs(false);
+  }
+};
+
   const resolveImage = async () => {
     if (!imageUrl || imageUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i)) return;
     setResolving(true);
@@ -3327,8 +3389,8 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [sidemenIds, setSidemenIds] = useState<string[]>(album?.sidemenIds || []);
-  
-  // New fields state
+  const [isFetchingDiscogs, setIsFetchingDiscogs] = useState(false);
+  const [discogsUrl, setDiscogsUrl] = useState('');
   const [artistName, setArtistName] = useState(album?.artistName || '');
   const [recordingDates, setRecordingDates] = useState(album?.recordingDates || '');
   const [releaseDate, setReleaseDate] = useState(album?.releaseDate || '');
