@@ -2285,7 +2285,7 @@ const handleFetchFromDiscogs = async () => {
 
   try {
     const response = await fetch(
-      `/api/discogs/search-by-catalog?catno=${encodeURIComponent(catalogNumber)}`
+        `/api/discogs-search-by-catalog?catno=${encodeURIComponent(catalogNumber)}`
     );
 
     const data = await response.json();
