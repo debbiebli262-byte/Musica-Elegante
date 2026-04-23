@@ -1390,18 +1390,10 @@ function SearchPage() {
             {filteredAlbums.length} resultado{filteredAlbums.length === 1 ? '' : 's'}
           </p>
           <div className="flex bg-ink/5 p-1 rounded-full w-fit">
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={cn("p-2 rounded-full transition-all", viewMode === 'grid' ? "bg-paper text-gold shadow-sm" : "text-ink/40 hover:text-ink")}
-            >
+            <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-full", viewMode === 'grid' ? "bg-paper text-gold" : "text-ink/40")}>
               <LayoutGrid size={18} />
             </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={cn("p-2 rounded-full transition-all", viewMode === 'list' ? "bg-paper text-gold shadow-sm" : "text-ink/40 hover:text-ink")}
-            >
+            <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-full", viewMode === 'list' ? "bg-paper text-gold" : "text-ink/40")}>
               <List size={18} />
             </button>
           </div>
@@ -1415,47 +1407,14 @@ function SearchPage() {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredAlbums.map((album) => (
-            <div key={album.id} className="group rounded-3xl overflow-hidden border border-ink/10 bg-white shadow-sm hover:shadow-lg transition-all">
-              <div className="aspect-[4/3] bg-ink/5 overflow-hidden">
-                {album.imageUrl ? (
-                  <img src={album.imageUrl} alt={album.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-ink/30">
-                    Sin imagen
-                  </div>
-                )}
-              </div>
-              <div className="p-6 space-y-2">
-                <p className="font-serif text-2xl leading-tight">{album.title}</p>
-                <p className="text-sm text-ink/60">{album.artistName || 'Artista sin asignar'}</p>
-                <p className="text-xs uppercase tracking-widest text-ink/40">
-                  {[album.releaseYear, album.label, album.catalogNumber].filter(Boolean).join(' · ') || 'Sin datos editoriales'}
-                </p>
-              </div>
-            </div>
+            <AlbumCard key={album.id} album={album} viewMode="grid" />
           ))}
         </div>
       ) : (
-        <div className="rounded-3xl border border-ink/10 bg-white overflow-hidden">
-          {filteredAlbums.map((album, index) => (
-            <div key={album.id} className={cn("grid grid-cols-1 md:grid-cols-[140px,1fr] gap-5 p-5 md:p-6", index !== 0 && "border-t border-ink/10")}>
-              <div className="aspect-[4/3] md:aspect-square rounded-2xl overflow-hidden bg-ink/5">
-                {album.imageUrl ? (
-                  <img src={album.imageUrl} alt={album.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-ink/30">Sin imagen</div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <p className="font-serif text-2xl">{album.title}</p>
-                <p className="text-sm text-ink/60">{album.artistName || 'Artista sin asignar'}</p>
-                <p className="text-sm text-ink/55 leading-relaxed">
-                  {[album.recordingDates, album.location, album.country].filter(Boolean).join(' · ') || 'Sin datos de grabación'}
-                </p>
-                <p className="text-xs uppercase tracking-widest text-ink/40">
-                  {[album.releaseYear, album.label, album.catalogNumber].filter(Boolean).join(' · ') || 'Sin datos editoriales'}
-                </p>
-              </div>
+        <div className="rounded-3xl border border-ink/10 bg-white overflow-hidden divide-y divide-ink/10">
+          {filteredAlbums.map((album) => (
+            <div key={album.id} className="p-2">
+              <AlbumCard album={album} viewMode="list" />
             </div>
           ))}
         </div>
