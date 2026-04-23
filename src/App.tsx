@@ -3462,6 +3462,7 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
             maxWidthOrHeight: 1200,
             useWebWorker: true
           };
+
           fileToUpload = await imageCompression(file, options);
           console.log("Compressed album size:", fileToUpload.size, "bytes");
         } catch (compressionError) {
@@ -3495,6 +3496,67 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
       console.error("CRITICAL ERROR in album handleFileUpload:", error);
       alert("Error inesperado. Por favor, inténtalo de nuevo.");
       setUploading(false);
+    }
+  };
+
+  const handleFetchFromDiscogs = async () => {
+    if (!catalogNumber.trim()) {
+      alert("Introduce un número de catálogo primero.");
+      return;
+    }
+
+    setIsFetchingDiscogs(true);
+
+    try {
+      const response = await fetch(
+        `/api/discogs/search-by-catalog?catno=${encodeURIComponent(catalogNumber)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "No se pudo buscar en Discogs.");
+      }
+
+      if (data.title) setTitle(data.title);
+      if (data.year) setReleaseYear(String(data.year));
+      if (data.country) setCountry(data.country);
+      if (data.label) setLabel(data.label);
+      if (data.catno) setCatalogNumber(data.catno);
+
+      if (data.format) {
+        const normalizedFormats = data.format
+          .split(",")
+          .map((item: string) => item.trim())
+          .filter(Boolean)
+          .map((item: string) => {
+            const lower = item.toLowerCase();
+            if (lower.includes("cd")) return "CD";
+            if (lower.includes("vinyl") || lower.includes("lp")) return "Vinilo";
+            if (lower.includes("dvd")) return "DVD";
+            if (lower.includes("blu-ray") || lower.includes("bluray")) return "Bluray";
+            return "CD";
+          }) as ('CD' | 'Vinilo' | 'DVD' | 'Bluray')[];
+
+        if (normalizedFormats.length) {
+          setFormats([...new Set(normalizedFormats)]);
+        }
+      }
+
+      if (data.coverImage || data.thumb) {
+        setImageUrl(data.coverImage || data.thumb);
+      }
+
+      if (data.discogsUrl) {
+        setDiscogsUrl(data.discogsUrl);
+      }
+
+      alert("Datos cargados desde Discogs.");
+    } catch (error: any) {
+      console.error("Discogs fetch error:", error);
+      alert(error.message || "No se pudo obtener información desde Discogs.");
+    } finally {
+      setIsFetchingDiscogs(false);
     }
   };
 
@@ -4589,13 +4651,41 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-ink/40">Nº de Catálogo del Sello Editor</label>
-                  <input 
-                    value={catalogNumber}
-                    onChange={(e) => setCatalogNumber(e.target.value)}
-                    className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold transition-all"
-                    placeholder="Ej. 415 123-2"
-                  />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-ink/40">
+                    Nº de Catálogo del Sello Editor
+                  </label>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      value={catalogNumber}
+                      onChange={(e) => setCatalogNumber(e.target.value)}
+                      className="flex-1 bg-ink/5 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold transition-all"
+                      placeholder="Ej. 415 123-2"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={handleFetchFromDiscogs}
+                      disabled={!catalogNumber.trim() || isFetchingDiscogs}
+                      className="px-4 py-3 rounded-xl text-sm font-medium border border-ink/15 hover:bg-ink hover:text-paper transition disabled:opacity-50"
+                    >
+                      {isFetchingDiscogs ? "Buscando..." : "Discogs"}
+                    </button>
+                  </div>
+
+                  {discogsUrl && (
+                    <p className="text-xs text-ink/50">
+                      Datos de Discogs.{" "}
+                      <a
+                        href={discogsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        Ver release
+                      </a>
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-ink/40">Año de Edición</label>
