@@ -3519,13 +3519,41 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
       }
 
       if (data.title) setTitle(data.title);
-      if (data.year) setReleaseYear(String(data.year));
+      if (data.artist) setArtistName(data.artist);
+      if (data.year) {
+        const yearText = String(data.year);
+        setReleaseYear(yearText);
+        setEditionDate((current) => current || yearText);
+      }
       if (data.country) setCountry(data.country);
-      if (data.label) setLabel(data.label);
-      if (data.catno) setCatalogNumber(data.catno);
+      if (data.label) {
+        setLabel(data.label);
+        setOriginalLabel((current) => current || data.label);
+      }
+      if (data.catno) {
+        setCatalogNumber(data.catno);
+        setEditionCatalogNumber((current) => current || data.catno);
+      }
+
+      if (data.originalLabel) setOriginalLabel(data.originalLabel);
+      if (data.originalCatalogNumber) setOriginalCatalogNumber(data.originalCatalogNumber);
+      if (data.originalYear) setOriginalYear(String(data.originalYear));
+      if (data.recordingDate) setRecordingDates(data.recordingDate);
+      if (data.recordingLocation) setLocation(data.recordingLocation);
+      if (data.orchestra) setOrchestra(data.orchestra);
+      if (data.conductor) setConductor(data.conductor);
+      if (data.producer) setProducer(data.producer);
+      if (data.engineer) setEngineer(data.engineer);
+      if (data.masteringEngineer) setMasteringEngineer(data.masteringEngineer);
+      if (data.compositionDate) setCompositionDate(data.compositionDate);
+      if (data.compositionPlace) setCompositionPlace(data.compositionPlace);
+
+      if (typeof data.discCount === 'number' && data.discCount > 0) {
+        setDiscCount(data.discCount);
+      }
 
       if (data.format) {
-        const normalizedFormats = data.format
+        const normalizedFormats = String(data.format)
           .split(",")
           .map((item: string) => item.trim())
           .filter(Boolean)
@@ -3535,8 +3563,9 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
             if (lower.includes("vinyl") || lower.includes("lp")) return "Vinilo";
             if (lower.includes("dvd")) return "DVD";
             if (lower.includes("blu-ray") || lower.includes("bluray")) return "Bluray";
-            return "CD";
-          }) as ('CD' | 'Vinilo' | 'DVD' | 'Bluray')[];
+            return null;
+          })
+          .filter(Boolean) as ('CD' | 'Vinilo' | 'DVD' | 'Bluray')[];
 
         if (normalizedFormats.length) {
           setFormats([...new Set(normalizedFormats)]);
@@ -3549,6 +3578,44 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
 
       if (data.discogsUrl) {
         setDiscogsUrl(data.discogsUrl);
+      }
+
+      if (genre === 'classical') {
+        if (Array.isArray(data.discs) && data.discs.length > 0) {
+          setDiscs(data.discs);
+        } else if (Array.isArray(data.rawTracklist) && data.rawTracklist.length > 0) {
+          setDiscs([
+            {
+              discNumber: 1,
+              works: [
+                {
+                  title: 'Tracklist',
+                  movements: data.rawTracklist
+                    .filter((item: any) => item?.title && item?.type_ !== 'heading')
+                    .map((item: any, index: number) => ({
+                      trackNumber: index + 1,
+                      title: item.title,
+                      duration: item.duration || '',
+                    })),
+                },
+              ],
+            },
+          ]);
+        }
+      } else {
+        if (Array.isArray(data.tracks) && data.tracks.length > 0) {
+          setTracks(data.tracks);
+        } else if (Array.isArray(data.rawTracklist) && data.rawTracklist.length > 0) {
+          setTracks(
+            data.rawTracklist
+              .filter((item: any) => item?.title && item?.type_ !== 'heading')
+              .map((item: any, index: number) => ({
+                trackNumber: index + 1,
+                title: item.title,
+                duration: item.duration || '',
+              }))
+          );
+        }
       }
 
       alert("Datos cargados desde Discogs.");
