@@ -19,19 +19,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const prompt = `Escribe una biografía del artista "${artistName}" en español.
 
-Devuelve SOLO JSON válido con estas claves:
-- biography
-- birthDate
-- deathDate
-- birthPlace
-- deathPlace
-- instruments
-- periods
-- imageKeyword`;
+IMPORTANTE:
+- Divide la biografía en secciones claras con títulos
+- Usa 3 a 5 secciones como máximo
+- Cada sección debe tener un título corto y contenido claro
+
+Devuelve SOLO JSON válido con esta estructura:
+
+{
+  "biography": "",
+  "biographySections": [
+    {
+      "title": "",
+      "content": ""
+    }
+  ],
+  "birthDate": "",
+  "deathDate": "",
+  "birthPlace": "",
+  "deathPlace": "",
+  "instruments": [],
+  "periods": [],
+  "imageKeyword": ""
+}
+`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
     });
 
     const text = response.text;
@@ -40,11 +58,33 @@ Devuelve SOLO JSON válido con estas claves:
       return res.status(500).json({ error: "Empty response from Gemini" });
     }
 
-    const cleanText = text.replace(/```json|```/g, "").trim();
-    const data = JSON.parse(cleanText);
+    let cleanedText = text.trim();
+
+    if (cleanedText.startsWith("```json")) {
+      cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    }
+
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```\s*/, "").replace(/```$/, "").trim();
+    }
+
+    const firstBrace = cleanedText.indexOf("{");
+    const lastBrace = cleanedText.lastIndexOf("}");
+
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error("Invalid AI response:", cleanedText);
+      return res.status(500).json({ error: "Invalid AI response" });
+    }
+
+    cleanedText = cleanedText.slice(firstBrace, lastBrace + 1);
+
+    const data = JSON.parse(cleanedText);
 
     return res.status(200).json({
       biography: data.biography || "",
+      biographySections: Array.isArray(data.biographySections)
+        ? data.biographySections
+        : [],
       birthDate: data.birthDate || "",
       deathDate: data.deathDate || "",
       birthPlace: data.birthPlace || "",

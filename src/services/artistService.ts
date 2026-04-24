@@ -12,6 +12,7 @@ export async function fetchArtistMetadata(artistName: string) {
 
     return {
       biography: data.biography || "",
+      biographySections: Array.isArray(data.biographySections) ? data.biographySections : [],
       birthDate: data.birthDate || "",
       deathDate: data.deathDate || "",
       birthPlace: data.birthPlace || "",

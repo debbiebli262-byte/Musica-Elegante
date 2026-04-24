@@ -250,6 +250,7 @@ function Footer() {
 
 function Home() {
   const [artists, setArtists] = useState<Artist[]>([]);
+  
 
   useEffect(() => {
     const q = query(collection(db, 'artists'));
@@ -663,37 +664,47 @@ function ArtistDetail() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingAlbum, setIsAddingAlbum] = useState(false);
+  const [showLoadingPopup, setShowLoadingPopup] = useState(false);
   const navigate = useNavigate();
   const lastGenre = useRef<Genre | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    const unsubscribeArtist = onSnapshot(doc(db, 'artists', id), (doc) => {
-      if (doc.exists()) {
-        const data = { id: doc.id, ...doc.data() } as Artist;
-        setArtist(data);
-        lastGenre.current = data.genre;
-      } else {
-        if (lastGenre.current) {
-          navigate(`/${lastGenre.current}`);
+
+    const unsubscribeArtist = onSnapshot(
+      doc(db, 'artists', id),
+      (doc) => {
+        if (doc.exists()) {
+          const data = { id: doc.id, ...doc.data() } as Artist;
+          setArtist(data);
+          lastGenre.current = data.genre;
         } else {
-          navigate('/');
+          navigate(lastGenre.current ? `/${lastGenre.current}` : '/');
         }
-      }
-      setLoading(false);
-    }, (error) => handleFirestoreError(error, OperationType.GET, `artists/${id}`));
+        setLoading(false);
+      },
+      (error) => handleFirestoreError(error, OperationType.GET, `artists/${id}`)
+    );
 
     const q = query(collection(db, 'albums'), where('artistId', '==', id));
-    const unsubscribeAlbums = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Album));
-      setAlbums(data);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'albums'));
+    const unsubscribeAlbums = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Album));
+        setAlbums(data);
+      },
+      (error) => handleFirestoreError(error, OperationType.LIST, 'albums')
+    );
 
     const qSideman = query(collection(db, 'albums'), where('sidemenIds', 'array-contains', id));
-    const unsubscribeSideman = onSnapshot(qSideman, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Album));
-      setSidemanAlbums(data);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'albums'));
+    const unsubscribeSideman = onSnapshot(
+      qSideman,
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Album));
+        setSidemanAlbums(data);
+      },
+      (error) => handleFirestoreError(error, OperationType.LIST, 'albums')
+    );
 
     return () => {
       unsubscribeArtist();
@@ -708,15 +719,24 @@ function ArtistDetail() {
     const endDate = death ? new Date(death) : new Date();
     let age = endDate.getFullYear() - birthDate.getFullYear();
     const m = endDate.getMonth() - birthDate.getMonth();
+
     if (m < 0 || (m === 0 && endDate.getDate() < birthDate.getDate())) {
       age--;
     }
+
     return age;
   };
 
-  if (loading || !artist) return <div className="h-screen flex items-center justify-center font-serif italic text-2xl">Cargando...</div>;
+  if (loading || !artist) {
+    return (
+      <div className="h-screen flex items-center justify-center font-serif italic text-2xl">
+        Cargando...
+      </div>
+    );
+  }
 
   const age = calculateAge(artist.birthDate, artist.deathDate);
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
@@ -727,22 +747,27 @@ function ArtistDetail() {
     <div className="space-y-20 pb-20">
       <section className="relative h-[60vh] flex items-end px-6 pb-12 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={artist.imageUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1920'} 
-            alt={artist.name} 
+          <img
+            src={artist.imageUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1920'}
+            alt={artist.name}
             className="w-full h-full object-cover opacity-50 grayscale"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-paper via-paper/40 to-transparent" />
         </div>
-        
+
         <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="space-y-4">
-            <span className="text-xs uppercase tracking-widest font-bold text-gold">{artist.genre}</span>
-            <h1 className="font-serif text-6xl md:text-8xl tracking-tight">{artist.name}</h1>
+            <span className="text-xs uppercase tracking-widest font-bold text-gold">
+              {artist.genre}
+            </span>
+            <h1 className="font-serif text-6xl md:text-8xl tracking-tight">
+              {artist.name}
+            </h1>
           </div>
+
           <div className="flex gap-4">
-            <button 
+            <button
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 px-6 py-3 bg-ink text-paper rounded-full text-sm font-medium hover:bg-gold transition-colors"
             >
@@ -757,19 +782,50 @@ function ArtistDetail() {
         <div className="lg:col-span-2 space-y-12">
           {artist.biography && (
             <div className="space-y-6">
-              <h2 className="text-xs uppercase tracking-widest font-bold text-gold">Biografía</h2>
-              <div className="prose prose-ink max-w-none">
-                <p className="text-lg leading-relaxed text-ink/80 whitespace-pre-wrap">
-                  {artist.biography}
-                </p>
-              </div>
+              <h2 className="text-xs uppercase tracking-widest font-bold text-gold">
+                Biografía
+              </h2>
+
+              {artist.biographySections && artist.biographySections.length > 0 ? (
+                <div className="space-y-4">
+                  {artist.biographySections.map((section, index) => (
+                    <div
+                      key={index}
+                      className="rounded-xl border border-stone-200 bg-white/70 p-4 shadow-sm"
+                    >
+                      <h3 className="mb-2 text-lg font-semibold text-stone-800">
+                        {section.title}
+                      </h3>
+                      <p className="leading-relaxed text-stone-700 whitespace-pre-line">
+                        {section.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="prose prose-ink max-w-none">
+                  {artist.biography
+                    ?.split(/\n+/)
+                    .filter((p) => p.trim() !== '')
+                    .map((paragraph, index) => (
+                      <p
+                        key={index}
+                        className="text-lg leading-relaxed text-ink/80"
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                </div>
+              )}
             </div>
           )}
 
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs uppercase tracking-widest font-bold text-gold">Discografía Principal</h2>
-              <button 
+              <h2 className="text-xs uppercase tracking-widest font-bold text-gold">
+                Discografía Principal
+              </h2>
+              <button
                 onClick={() => setIsAddingAlbum(true)}
                 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:text-gold transition-colors"
               >
@@ -777,21 +833,27 @@ function ArtistDetail() {
                 <span>Añadir Álbum</span>
               </button>
             </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
               {albums.map((album) => (
                 <div key={album.id}>
                   <AlbumCard album={album} />
                 </div>
               ))}
+
               {albums.length === 0 && (
-                <p className="col-span-full text-ink/40 font-serif italic">No hay álbumes principales registrados.</p>
+                <p className="col-span-full text-ink/40 font-serif italic">
+                  No hay álbumes principales registrados.
+                </p>
               )}
             </div>
           </div>
 
           {sidemanAlbums.length > 0 && (
             <div className="space-y-8">
-              <h2 className="text-xs uppercase tracking-widest font-bold text-gold">Colaboraciones (Sideman)</h2>
+              <h2 className="text-xs uppercase tracking-widest font-bold text-gold">
+                Colaboraciones (Sideman)
+              </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
                 {sidemanAlbums.map((album) => (
                   <div key={album.id}>
@@ -805,57 +867,83 @@ function ArtistDetail() {
 
         <div className="space-y-12">
           <div className="bg-ink/5 p-8 rounded-3xl space-y-6">
-            <h3 className="font-serif text-2xl italic">Detalles del Artista</h3>
+            <h3 className="font-serif text-2xl italic">
+              Detalles del Artista
+            </h3>
+
             <div className="space-y-4 text-sm">
               {artist.instruments && artist.instruments.length > 0 && (
                 <div className="flex justify-between py-2 border-b border-ink/10">
-                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">Instrumentos</span>
+                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">
+                    Instrumentos
+                  </span>
                   <span className="text-right">{artist.instruments.join(', ')}</span>
                 </div>
               )}
+
               {((artist.periods && artist.periods.length > 0) || artist.period) && (
                 <div className="flex justify-between py-2 border-b border-ink/10">
                   <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">
                     {artist.genre === 'jazz' ? 'Sub-géneros' : 'Periodos'}
                   </span>
-                  <span className="text-right">{artist.periods?.join(', ') || artist.period}</span>
+                  <span className="text-right">
+                    {artist.periods?.join(', ') || artist.period}
+                  </span>
                 </div>
               )}
+
               {artist.birthDate && (
                 <div className="flex justify-between py-2 border-b border-ink/10">
-                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">Nacimiento</span>
+                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">
+                    Nacimiento
+                  </span>
                   <div className="text-right">
                     <div>{formatDate(artist.birthDate)}</div>
-                    {artist.birthPlace && <div className="text-[10px] text-ink/40">{artist.birthPlace}</div>}
+                    {artist.birthPlace && (
+                      <div className="text-[10px] text-ink/40">
+                        {artist.birthPlace}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
+
               {artist.deathDate && (
                 <div className="flex justify-between py-2 border-b border-ink/10">
-                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">Fallecimiento</span>
+                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">
+                    Fallecimiento
+                  </span>
                   <div className="text-right">
                     <div>{formatDate(artist.deathDate)}</div>
-                    <div className="text-[10px] text-ink/40">{artist.deathPlace}</div>
+                    <div className="text-[10px] text-ink/40">
+                      {artist.deathPlace}
+                    </div>
                   </div>
                 </div>
               )}
+
               {age !== null && (
                 <div className="flex justify-between py-2 border-b border-ink/10">
-                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">Edad {artist.deathDate ? 'al fallecer' : 'actual'}</span>
+                  <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">
+                    Edad {artist.deathDate ? 'al fallecer' : 'actual'}
+                  </span>
                   <span>{age} años</span>
                 </div>
               )}
+
               <div className="flex justify-between py-2 border-b border-ink/10">
-                <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">Género</span>
+                <span className="text-ink/40 uppercase tracking-widest font-bold text-[10px]">
+                  Género
+                </span>
                 <span className="capitalize">{artist.genre}</span>
               </div>
             </div>
           </div>
-          
+
           <div className="aspect-[3/4] rounded-3xl overflow-hidden shadow-xl">
-            <img 
-              src={artist.imageUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1000'} 
-              alt={artist.name} 
+            <img
+              src={artist.imageUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1000'}
+              alt={artist.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
@@ -865,20 +953,34 @@ function ArtistDetail() {
 
       <AnimatePresence>
         {isEditing && (
-          <ArtistModal 
-            artist={artist} 
-            genre={artist.genre} 
-            onClose={() => setIsEditing(false)} 
+          <ArtistModal
+            artist={artist}
+            genre={artist.genre}
+            onClose={() => setIsEditing(false)}
           />
         )}
+
         {isAddingAlbum && (
-          <AlbumModal 
-            artistId={artist.id} 
-            genre={artist.genre} 
-            onClose={() => setIsAddingAlbum(false)} 
+          <AlbumModal
+            artistId={artist.id}
+            genre={artist.genre}
+            onClose={() => setIsAddingAlbum(false)}
           />
         )}
       </AnimatePresence>
+
+      {showLoadingPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="rounded-2xl bg-white px-8 py-6 shadow-xl text-center space-y-3">
+            <div className="text-lg font-semibold text-ink">
+              Cargando artista...
+            </div>
+            <div className="text-sm text-ink/60">
+              Esto puede tardar unos segundos
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4913,7 +5015,20 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
             </div>
           </div>
         </form>
-      </motion.div>
+        </motion.div>
+        
+        {fetchingMetadata && (
+          <div className="absolute inset-0 z-[999] flex items-center justify-center bg-paper/80 backdrop-blur-sm">
+            <div className="rounded-2xl bg-white px-8 py-6 shadow-xl text-center space-y-3 border border-gold/20">
+              <div className="text-lg font-semibold text-ink">
+                Cargando artista...
+              </div>
+              <div className="text-sm text-ink/60">
+                Buscando información del artista
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
