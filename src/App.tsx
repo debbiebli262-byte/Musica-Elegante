@@ -1528,7 +1528,8 @@ function ImportWordPage() {
 
       setMessage('Importación guardada como borrador en Firebase.');
     } catch (error) {
-      setMessage(handleFirestoreError(error, { operationType: OperationType.CREATE, path: 'import_jobs' }));
+      handleFirestoreError(error, OperationType.CREATE, 'import_jobs');
+      setMessage('No se pudo guardar la importación como borrador en Firebase.');
     } finally {
       setIsSavingDraft(false);
     }
@@ -1638,7 +1639,8 @@ await setDoc(
 
       setMessage('Datos guardados en Firebase. Revisa el resultado en artists, albums e import_jobs.');
     } catch (error) {
-      setMessage(handleFirestoreError(error, { operationType: OperationType.CREATE, path: 'artists/albums/import_jobs' }));
+      handleFirestoreError(error, OperationType.CREATE, 'artists/albums/import_jobs');
+      setMessage('No se pudieron guardar los datos aprobados en Firebase.');
     } finally {
       setIsApproving(false);
     }
