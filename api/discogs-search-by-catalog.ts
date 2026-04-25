@@ -262,17 +262,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: "DISCOGS_TOKEN is missing" });
     }
 
-    const variants = [
-      rawCatno,
-      rawCatno.replace(/-/g, ""),
-      rawCatno.replace(/\s+/g, ""),
-    ].filter(Boolean);
+    const cleanedNoSpaces = rawCatno.replace(/[-\s]/g, "");
+
+    const searchAttempts = [
+      { key: "barcode", value: rawCatno },
+      { key: "barcode", value: cleanedNoSpaces },
+      { key: "catno", value: rawCatno },
+      { key: "catno", value: rawCatno.replace(/-/g, "") },
+      { key: "catno", value: rawCatno.replace(/\s+/g, "") },
+    ].filter((attempt, index, all) =>
+      attempt.value &&
+      all.findIndex((other) => other.key === attempt.key && other.value === attempt.value) === index
+    );
 
     let found: any = null;
 
-    for (const catno of variants) {
+    for (const attempt of searchAttempts) {
       const searchUrl = new URL("https://api.discogs.com/database/search");
-      searchUrl.searchParams.set("catno", catno);
+      searchUrl.searchParams.set(attempt.key, attempt.value);
       searchUrl.searchParams.set("type", "release");
       searchUrl.searchParams.set("per_page", "10");
 
