@@ -201,6 +201,21 @@ function findExtraArtistNames(extraartists: DiscogsExtraArtist[] = [], roleKeywo
   );
 }
 
+function findComposers(extraartists: DiscogsExtraArtist[] = []) {
+  return Array.from(
+    new Set(
+      extraartists
+        .filter((artist) =>
+          String(artist.role || "").toLowerCase().includes("composed")
+        )
+        .map((artist) =>
+          String(artist.name || "").replace(/\s*\(\d+\)$/, "").trim()
+        )
+        .filter(Boolean)
+    )
+  );
+}
+
 function guessDiscCount(releaseData: any, found: any) {
   const descriptions = [
     ...(Array.isArray(found?.format) ? found.format : []),
@@ -326,7 +341,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const trackLevelExtraArtists = rawTracklist.flatMap((track) =>
       Array.isArray(track.extraartists) ? track.extraartists : []
     );
+    
     const combinedExtraArtists = [...albumLevelExtraArtists, ...trackLevelExtraArtists];
+    const composers = findComposers(combinedExtraArtists);
 
     const artist =
       Array.isArray(releaseData?.artists) && releaseData.artists.length > 0
@@ -358,6 +375,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       genres: genreList,
       styles: styleList,
       discCount: guessDiscCount(releaseData, found),
+      composers,
       orchestra: findExtraArtistNames(combinedExtraArtists, ["orchestra"]),
       conductor: findExtraArtistNames(combinedExtraArtists, ["conductor", "directed by", "director"]),
       producer: findExtraArtistNames(combinedExtraArtists, ["producer", "produced by"]),

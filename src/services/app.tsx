@@ -3847,7 +3847,9 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
       }
       onClose();
     } catch (error) {
-      handleFirestoreError(error, album ? OperationType.UPDATE : OperationType.CREATE, 'albums');
+      const errInfo = handleFirestoreError(error, album ? OperationType.UPDATE : OperationType.CREATE, 'albums');
+      console.error('Album save failed:', errInfo);
+      alert('No se pudo guardar el álbum. Revisa la consola para ver el error exacto.');
     } finally {
       setSaving(false);
     }

@@ -1,6 +1,58 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI } from "@google/genai";
 
+async function fetchWikipediaArtistImage(artistName: string): Promise<string> {
+  const searchQueries = [
+    artistName,
+    `${artistName} musician`,
+    `${artistName} composer`,
+    `${artistName} jazz`,
+  ];
+
+  for (const searchQuery of searchQueries) {
+    try {
+      const searchUrl =
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=3&srsearch=${encodeURIComponent(searchQuery)}`;
+
+      const searchResponse = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "MusicaElegante/1.0 artist image lookup",
+        },
+      });
+
+      if (!searchResponse.ok) continue;
+
+      const searchData = await searchResponse.json();
+      const results = searchData?.query?.search;
+
+      if (!Array.isArray(results)) continue;
+
+      for (const result of results) {
+        const title = result?.title;
+        if (!title) continue;
+
+        const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+        const summaryResponse = await fetch(summaryUrl, {
+          headers: {
+            "User-Agent": "MusicaElegante/1.0 artist image lookup",
+          },
+        });
+
+        if (!summaryResponse.ok) continue;
+
+        const summaryData = await summaryResponse.json();
+        const imageUrl = summaryData?.originalimage?.source || summaryData?.thumbnail?.source || "";
+
+        if (imageUrl) return imageUrl;
+      }
+    } catch (error) {
+      console.warn("Wikipedia artist image lookup failed:", error);
+    }
+  }
+
+  return "";
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const artistName = String(req.query.name || "").trim();
 
@@ -91,9 +143,7 @@ Devuelve SOLO JSON válido con esta estructura:
       deathPlace: data.deathPlace || "",
       instruments: Array.isArray(data.instruments) ? data.instruments : [],
       periods: Array.isArray(data.periods) ? data.periods : [],
-      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(
-        `${artistName} portrait ${data.imageKeyword || "musician"}`
-      )}/800/800`,
+      imageUrl: await fetchWikipediaArtistImage(artistName),
     });
   } catch (error: any) {
     console.error("Gemini artist metadata error:", error);
