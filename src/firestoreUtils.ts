@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 import { auth, db } from './firebase';
 import { FirestoreErrorInfo } from './types';
 import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
@@ -51,4 +50,3 @@ export async function getArtistByName(name: string) {
 export async function saveArtistData(id: string, data: any) {
   await setDoc(doc(db, 'artists', id), data, { merge: true });
 }
->>>>>>> ce2ad4dc65be35545ad453856f78ab0e1389971a
