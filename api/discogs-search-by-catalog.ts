@@ -263,6 +263,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const cleanedNoSpaces = rawCatno.replace(/[-\s]/g, "");
+    
     const spacedBarcode =
       cleanedNoSpaces.length === 12
         ? `${cleanedNoSpaces[0]} ${cleanedNoSpaces.slice(1, 6)} ${cleanedNoSpaces.slice(6, 11)} ${cleanedNoSpaces.slice(11)}`

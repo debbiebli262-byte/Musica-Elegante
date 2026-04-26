@@ -142,6 +142,20 @@ Al final, devuélveme únicamente el texto reorganizado, sin explicaciones adici
 function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, setUser);
+  return unsubscribe;
+}, []);
+
+const handleLogin = async () => {
+  await signInWithPopup(auth, new GoogleAuthProvider());
+};
+
+const handleLogout = async () => {
+  await signOut(auth);
+};
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -179,6 +193,14 @@ function Navbar() {
           ))}
         </div>
 
+        <button
+          type="button"
+          onClick={user ? handleLogout : handleLogin}
+          className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ink text-paper text-sm hover:bg-gold transition-colors"
+        >
+          {user ? 'Salir' : 'Login'}
+        </button>
+        
         <button
           type="button"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
