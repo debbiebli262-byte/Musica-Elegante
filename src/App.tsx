@@ -6,7 +6,7 @@ import { ref, uploadString, getDownloadURL, uploadBytes } from 'firebase/storage
 import imageCompression from 'browser-image-compression';
 import { db, storage, auth } from './firebase';
 import { Artist, Album, CollectionItem, Genre, Musician, Track, Disc, Work, Movement } from './types';
-import { OperationType, handleFirestoreError } from './firestoreUtils';
+import { OperationType, handleFirestoreError, getArtistByName, saveArtistData } from './firestoreUtils';
 import { fetchArtistDiscography } from './services/discographyService';
 import { fetchArtistMetadata } from './services/artistService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -2537,6 +2537,90 @@ const handleFetchFromDiscogs = async () => {
       setFetchingMetadata(false);
     }
   };
+  const buildAlbumDataForArtist = (targetArtistId: string, targetArtistName: string) => ({
+    title,
+    releaseYear,
+    imageUrl,
+    artistId: targetArtistId,
+    genre,
+    sidemenIds,
+    artistName: targetArtistName,
+    recordingDates,
+    releaseDate,
+    location,
+    label,
+    catalogNumber,
+    originalCatalogNumber,
+    editionCatalogNumber,
+    editionDate,
+    country,
+    originalLabel,
+    originalYear,
+    foundationDate,
+    foundationPlace,
+    founderName,
+    choirMaster,
+    engineer,
+    masteringEngineer,
+    producer,
+    discCount,
+    formats,
+    orchestra,
+    conductor,
+    compositionDate,
+    compositionPlace,
+    musicians,
+    tracks,
+    discs,
+    anecdotes,
+  });
+
+  const approveCurrentComposer = async () => {
+    if (!composerData?.name) return;
+
+    setSaving(true);
+
+    try {
+      const existingArtist = await getArtistByName(composerData.name);
+      const targetArtistId = existingArtist?.id || slugifyArtistId(composerData.name);
+
+      if (!existingArtist) {
+        await saveArtistData(targetArtistId, {
+          id: targetArtistId,
+          name: composerData.name,
+          genre: 'classical',
+          biography: composerData.biography || '',
+          biographySections: composerData.biographySections || [],
+          imageUrl: composerData.imageUrl || '',
+          birthDate: composerData.birthDate || '',
+          birthPlace: composerData.birthPlace || '',
+          deathDate: composerData.deathDate || '',
+          deathPlace: composerData.deathPlace || '',
+          instruments: composerData.instruments || [],
+          periods: composerData.periods || [],
+        });
+      }
+
+      await addDoc(collection(db, 'albums'), buildAlbumDataForArtist(targetArtistId, composerData.name));
+
+      if (currentComposerIndex < pendingComposers.length - 1) {
+        setCurrentComposerIndex(currentComposerIndex + 1);
+        setComposerData(null);
+      } else {
+        setPendingComposers([]);
+        setComposerData(null);
+        setCurrentComposerIndex(0);
+        alert('Álbum guardado para todos los compositores aprobados.');
+      }
+    } catch (error) {
+      const errInfo = handleFirestoreError(error, OperationType.CREATE, 'artists/albums');
+      console.error('Composer album approval failed:', errInfo);
+      alert('No se pudo guardar este compositor/álbum. Revisa la consola.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -3560,6 +3644,10 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
   const [tracks, setTracks] = useState<Track[]>(album?.tracks || []);
   const [discs, setDiscs] = useState<Disc[]>(album?.discs || (genre === 'classical' ? [{ discNumber: 1, works: [] }] : []));
   const [anecdotes, setAnecdotes] = useState(album?.anecdotes || '');
+  const [pendingComposers, setPendingComposers] = useState<string[]>([]);
+  const [currentComposerIndex, setCurrentComposerIndex] = useState(0);
+  const [composerData, setComposerData] = useState<any>(null);
+  const [loadingComposer, setLoadingComposer] = useState(false);
 
   const [allArtists, setAllArtists] = useState<Artist[]>([]);
   const [allAlbums, setAllAlbums] = useState<Album[]>([]);
@@ -3655,6 +3743,10 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
       if (!response.ok) {
         throw new Error(data?.error || "No se pudo buscar en Discogs.");
       }
+
+      setPendingComposers(Array.isArray(data.composers) ? data.composers : []);
+      setCurrentComposerIndex(0);
+      setComposerData(null);
 
       if (data.title) setTitle(data.title);
       if (data.artist) setArtistName(data.artist);
@@ -3890,6 +3982,56 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
           </div>
 
           <div className="flex-grow overflow-y-auto p-8 space-y-10">
+            {pendingComposers.length > 0 && (
+              <div className="rounded-3xl border border-gold/30 bg-white p-6 space-y-4 shadow-sm">
+                <h3 className="font-serif text-2xl italic">
+                  Confirmar compositor {currentComposerIndex + 1} de {pendingComposers.length}
+                </h3>
+
+                {loadingComposer && (
+                  <p className="text-sm text-ink/50">Cargando datos del compositor...</p>
+                )}
+
+                {composerData && (
+                  <div className="space-y-4">
+                    <div className="flex gap-4 items-start">
+                      {composerData.imageUrl && (
+                        <img
+                          src={composerData.imageUrl}
+                          alt={composerData.name}
+                          className="w-32 h-32 rounded-full object-cover bg-ink/5"
+                          referrerPolicy="no-referrer"
+                        />
+                      )}
+
+                      <div className="space-y-2">
+                        <div className="font-bold text-lg">{composerData.name}</div>
+                        <div className="text-sm text-ink/50">
+                          {[composerData.birthDate, composerData.birthPlace].filter(Boolean).join(" • ")}
+                        </div>
+                        <div className="text-sm text-ink/50">
+                          {[composerData.deathDate, composerData.deathPlace].filter(Boolean).join(" • ")}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-sm leading-relaxed text-ink/70 whitespace-pre-line max-h-56 overflow-y-auto">
+                      {composerData.biography || 'No se encontró biografía.'}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={approveCurrentComposer}
+                      disabled={saving || loadingComposer}
+                      className="px-5 py-3 rounded-full bg-ink text-paper text-sm font-medium hover:bg-gold transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Guardando...' : 'Aprobar, guardar y continuar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Section: Basic Info */}
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-gold">
@@ -5021,18 +5163,6 @@ function AlbumModal({ album, artistId, genre, onClose }: { album?: Album, artist
         </form>
         </motion.div>
         
-        {fetchingMetadata && (
-          <div className="absolute inset-0 z-[999] flex items-center justify-center bg-paper/80 backdrop-blur-sm">
-            <div className="rounded-2xl bg-white px-8 py-6 shadow-xl text-center space-y-3 border border-gold/20">
-              <div className="text-lg font-semibold text-ink">
-                Cargando artista...
-              </div>
-              <div className="text-sm text-ink/60">
-                Buscando información del artista
-              </div>
-            </div>
-          </div>
-        )}
     </div>
   );
 }
